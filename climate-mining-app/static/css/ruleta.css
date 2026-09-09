@@ -1,0 +1,191 @@
+/* ==========================================================================
+   ClimaTec — "Ruleta" de navegacion.
+   Reemplaza el menu desplegable clasico (lista vertical tipo <ul>) por una
+   rueda de nodos numerados: en reposo solo se ven los numeros conectados
+   por una linea; al pasar el mouse (o el foco, para teclado/accesibilidad)
+   sobre un nodo aparece su titulo a un lado, y el clic navega.
+
+   Dos usos del mismo componente (misma marca HTML/CSS, distinto contexto):
+     1) .ruleta--inicio   -> selector de "dimensiones" (Etapa 1, futura
+        Etapa 2...) fijado en la parte superior de Inicio; se oculta al
+        hacer scroll. Al hacer clic en una dimension, la MISMA rueda pasa
+        a mostrar las secciones de esa etapa (nivel 2).
+     2) .ruleta--overlay  -> accesible desde el boton "Etapa 1 ⌄" de la
+        topbar en cualquier pagina interior; abre un panel flotante con
+        la rueda ya en nivel de "secciones" para saltar entre las 8
+        paginas de la Etapa 1 sin usar un <ul> desplegable.
+   ========================================================================== */
+
+.ruleta-caja {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .6rem;
+    font-family: "IBM Plex Mono", monospace;
+}
+.ruleta-titulo {
+    font-size: .68rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+}
+.ruleta-subtitulo {
+    min-height: 1.4em;
+    font-family: "Spectral", serif;
+    font-size: 1.05rem;
+    color: #fff;
+    text-align: center;
+    transition: opacity .2s var(--ease-apogee);
+}
+
+.ruleta-rueda {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+}
+.ruleta-rueda::before {
+    content: "";
+    position: absolute;
+    top: 20px; bottom: 20px; left: 50%;
+    width: 2px; transform: translateX(-50%);
+    background: linear-gradient(180deg, var(--cold), var(--warm));
+    opacity: .35;
+}
+
+.ruleta-nodo {
+    position: relative;
+    z-index: 1;
+    width: 40px; height: 40px;
+    margin: 5px 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: rgba(13, 18, 36, .8);
+    border: 1px solid var(--glass-border);
+    color: rgba(255,255,255,.75);
+    font-size: .82rem; font-weight: 600;
+    cursor: pointer;
+    transition: transform .22s var(--ease-apogee), border-color .22s ease,
+                background .22s ease, color .22s ease, box-shadow .22s ease;
+}
+.ruleta-nodo:hover,
+.ruleta-nodo:focus-visible {
+    transform: scale(1.14);
+    border-color: var(--warm);
+    color: #fff;
+    background: rgba(255,106,77,.16);
+    box-shadow: 0 0 0 5px rgba(255,106,77,.12);
+    outline: none;
+}
+.ruleta-nodo.es-actual {
+    border-color: var(--cold);
+    background: rgba(73,199,224,.16);
+    color: #fff;
+    box-shadow: 0 0 0 5px rgba(73,199,224,.14);
+}
+.ruleta-nodo .ruleta-num { pointer-events: none; }
+
+/* Etiqueta flotante junto al nodo activo (desktop: a la derecha).
+   position:absolute anclada al contenedor de la rueda (.ruleta-caja o
+   .ruleta-overlay-panel, ambos position:relative) en vez de position:fixed:
+   asi no depende de que ningun ancestro deje de tener transform/filter. */
+.ruleta-flotante {
+    position: absolute;
+    z-index: 90;
+    pointer-events: none;
+    padding: .45rem .8rem;
+    border-radius: 10px;
+    background: rgba(13, 18, 36, .92);
+    border: 1px solid var(--glass-border);
+    color: #fff;
+    font-family: "Spectral", serif;
+    font-size: .95rem;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(-50%);
+    transition: opacity .18s var(--ease-apogee);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+.ruleta-flotante.visible { opacity: 1; }
+
+/* ---------- Variante Inicio: fila propia arriba del hero, se oculta al
+   hacer scroll (nunca se superpone al titular ni a la tarjeta, porque
+   vive en el flujo normal, no en position:absolute). --------------------- */
+.ruleta--inicio {
+    align-self: flex-end;
+    max-height: 220px;
+    opacity: 1;
+    /* Sin "transform" aqui (ni siquiera translateY(0)): un transform,
+       aunque sea identidad, crea un containing block nuevo y desplaza
+       cualquier descendiente position:fixed (la etiqueta flotante) fuera
+       de sitio. El transform de salida solo se aplica en .ruleta--oculta,
+       que ya no es visible de todas formas. */
+    transition: opacity .4s var(--ease-apogee), transform .4s var(--ease-apogee),
+                max-height .4s var(--ease-apogee), margin .4s var(--ease-apogee), visibility .4s;
+    margin-bottom: 4px;
+}
+.ruleta--inicio.ruleta--oculta {
+    opacity: 0; transform: translateY(-14px);
+    max-height: 0; margin-bottom: 0;
+    visibility: hidden; pointer-events: none;
+}
+@media (max-width: 1023px) {
+    .ruleta--inicio { align-self: center; margin: 0 auto 1rem; }
+}
+
+/* Boton de vuelta (nivel secciones -> nivel dimensiones), solo visible en nivel 2 */
+.ruleta-volver {
+    background: none; border: none; color: var(--ink-mute);
+    font-family: "IBM Plex Mono", monospace; font-size: .68rem;
+    letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+    padding: .2rem .4rem; display: none;
+}
+.ruleta-volver:hover { color: #fff; }
+.ruleta-caja[data-nivel="secciones"] .ruleta-volver { display: inline-flex; align-items: center; gap: .3rem; }
+
+/* ---------- Variante overlay: disparada desde la topbar en paginas internas */
+.ruleta-disparador {
+    display: none;
+}
+@media (min-width: 1024px) { .ruleta-disparador { display: inline-flex; } }
+
+.ruleta-overlay-fondo {
+    position: fixed; inset: 0; z-index: 80;
+    background: rgba(6, 8, 18, .78);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    opacity: 0; visibility: hidden;
+    transition: opacity .35s var(--ease-apogee), visibility .35s;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+}
+.ruleta-overlay-fondo.abierto { opacity: 1; visibility: visible; }
+
+.ruleta-overlay-panel {
+    background: rgba(13, 18, 36, .82);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.8rem 2.2rem 1.4rem;
+    box-shadow: var(--shadow);
+    transform: scale(.94); transition: transform .35s var(--ease-apogee);
+    max-width: 420px; width: 100%;
+    text-align: center;
+    position: relative;
+}
+.ruleta-overlay-fondo.abierto .ruleta-overlay-panel { transform: scale(1); }
+.ruleta-overlay-cerrar {
+    position: absolute; top: .8rem; right: .8rem;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.06); border: none; color: #fff;
+    cursor: pointer; font-size: 1rem; line-height: 1;
+}
+.ruleta-overlay-cerrar:hover { background: rgba(255,255,255,.14); }
+.ruleta-overlay-panel .ruleta-flotante { position: static; opacity: 1; transform: none; background: none; border: none; backdrop-filter: none; padding: .3rem 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ruleta-nodo, .ruleta-flotante, .ruleta--inicio, .ruleta-overlay-fondo, .ruleta-overlay-panel {
+        transition: none !important;
+    }
+}
