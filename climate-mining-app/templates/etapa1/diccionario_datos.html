@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block titulo %}6. Diccionario de datos · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-warm animate-fade-down">
+    <div class="icono-hero">📖</div>
+    <p class="eyebrow"><span class="paso">06</span> Caracterizacion de los datos</p>
+    <h1>Diccionario de datos</h1>
+    <p class="lede">Descripcion de cada columna del esquema y catalogo de indicadores, de forma que
+    el conjunto se entienda sin explicaciones adicionales. <strong>Unidad de analisis:</strong> una
+    observacion (un indicador medido para una entidad, en una fecha y desde una fuente).</p>
+</div>
+
+<h2>Esquema del dataset (columnas)</h2>
+
+<div class="tabla-wrap animate-fade-up" style="animation-delay:150ms;">
+    <table>
+        <thead>
+            <tr><th>Variable</th><th>Tipo</th><th>Descripcion</th><th>Unidad</th><th>Dominio</th><th>Fuente</th></tr>
+        </thead>
+        <tbody>
+            {% for d in diccionario %}
+            <tr>
+                <td><code>{{ d.variable }}</code></td>
+                <td>
+                    {% if 'Numerica' in d.tipo %}<span class="tag num">numerica</span>
+                    {% elif 'Temporal' in d.tipo %}<span class="tag tmp">temporal</span>
+                    {% else %}<span class="tag cat">categorica</span>{% endif %}
+                    <span style="color:var(--ink-soft);font-size:.8rem">{{ d.tipo }}</span>
+                </td>
+                <td>{{ d.descripcion }}</td>
+                <td>{{ d.unidad }}</td>
+                <td class="mono">{{ d.dominio }}</td>
+                <td>{{ d.fuente }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if indicadores %}
+<h2 style="margin-top:2rem;">Catalogo de indicadores</h2>
+<p style="color:var(--ink-soft);">Los {{ indicadores|length }} indicadores que transporta la columna
+<span class="mono">indicador</span>, con su unidad, el tipo de fuente que los aporta y el numero de
+observaciones (calculado en vivo del dataset).</p>
+<div class="tabla-wrap animate-fade-up" style="animation-delay:150ms;">
+    <table>
+        <thead>
+            <tr><th>Indicador</th><th>Unidad</th><th>Tipo de fuente</th><th>Observaciones</th></tr>
+        </thead>
+        <tbody>
+            {% for i in indicadores %}
+            <tr>
+                <td>{{ i.indicador }}</td>
+                <td>{{ i.unidad }}</td>
+                <td>
+                    {% if 'Primaria' in i.tipo_fuente %}<span class="tag num">primaria</span>{% endif %}
+                    {% if 'Secundaria' in i.tipo_fuente %}<span class="tag tmp">secundaria</span>{% endif %}
+                    {% if 'Terciaria' in i.tipo_fuente %}<span class="tag cat">terciaria</span>{% endif %}
+                </td>
+                <td class="mono">{{ "{:,}".format(i.registros).replace(',', '.') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}
