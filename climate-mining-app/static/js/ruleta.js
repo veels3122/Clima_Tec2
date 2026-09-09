@@ -1,19 +1,14 @@
-// ClimaTec — "Ruleta" de navegacion (reemplaza el <ul> desplegable de
-// "Etapa 1" por una rueda de nodos numerados). Lee los datos de dos
-// bloques JSON que imprime base.html con Jinja (asi los textos y las URLs
-// siguen viniendo de url_for(), nunca se hardcodean aqui):
+// ClimaTec — navegacion por etapas y secciones.
+// Lee los datos desde los bloques JSON que imprime base.html con Jinja
+// (asi los nombres y las URLs siempre vienen de url_for(), nunca se
+// hardcodean aqui):
 //
-//   #ruleta-dimensiones-data  -> [{num, titulo, href, disponible}]
-//   #ruleta-secciones-data    -> [{num, titulo, href, activo}]
+//   #ruleta-etapas-data      -> [{num, titulo, disponible}]      (5 etapas)
+//   #ruleta-secciones-data   -> [{num, titulo, href, activo}]    (8 secciones de "Definicion")
 //
-// Un mismo componente ("rueda de nodos + etiqueta flotante al pasar el
-// mouse") se usa en dos sitios:
-//   - .ruleta--inicio   dentro de Inicio: empieza en nivel "dimensiones"
-//     y al hacer clic en la unica dimension disponible (Etapa 1) pasa a
-//     nivel "secciones" en el mismo sitio.
-//   - .ruleta-overlay-panel dentro de un overlay fijo, disparado por el
-//     boton "Etapa 1" de la topbar en cualquier pagina interior; ese
-//     siempre arranca directo en nivel "secciones".
+// Dos piezas de UI, cada una con su propia forma:
+//   1) .etapas-rail   (riel vertical, en Inicio) — construirEtapasRail()
+//   2) .rueda-secciones (donut SVG de 8 gajos, en el overlay) — construirRuedaSecciones()
 
 (function () {
     'use strict';
@@ -24,144 +19,155 @@
         try { return JSON.parse(el.textContent); } catch (e) { return null; }
     }
 
-    function crearFlotante(contenedor) {
-        const flot = document.createElement('div');
-        flot.className = 'ruleta-flotante';
-        flot.setAttribute('aria-hidden', 'true');
-        contenedor.appendChild(flot);
-        return flot;
-    }
+    // ------------------------------------------------------------------
+    // 1) Riel vertical de ETAPAS (Inicio)
+    // ------------------------------------------------------------------
+    function construirEtapasRail() {
+        const cont = document.getElementById('etapas-rail');
+        if (!cont) return;
+        const etapas = leerJSON('ruleta-etapas-data') || [];
+        const lista = document.createElement('ol');
+        lista.className = 'etapas-rail-lista';
 
-    function posicionarFlotante(flot, nodo, contenedor) {
-        const r = nodo.getBoundingClientRect();
-        const cr = contenedor.getBoundingClientRect();
-        flot.style.top = (r.top - cr.top + r.height / 2) + 'px';
-        flot.style.left = (r.right - cr.left + 8) + 'px';
-    }
+        etapas.forEach((e) => {
+            const li = document.createElement('li');
+            li.className = 'etapas-rail-item' + (e.disponible ? ' es-activa' : '');
 
-    // Construye la rueda (lista de nodos circulares) dentro de `rueda`,
-    // usando `items` = [{num,titulo,href,activo|disponible}], y devuelve
-    // una funcion de limpieza.
-    function pintarRueda(rueda, flot, items, opts) {
-        opts = opts || {};
-        rueda.innerHTML = '';
-        items.forEach((item) => {
-            const nodo = document.createElement(item.href && (opts.siempreNavegable !== false) ? 'a' : 'button');
-            nodo.className = 'ruleta-nodo' + (item.activo ? ' es-actual' : '');
-            if (item.disponible === false) {
-                nodo.className += ' ruleta-nodo--proximo';
+            const nodo = document.createElement(e.disponible ? 'button' : 'span');
+            nodo.className = 'etapas-rail-nodo' + (e.disponible ? ' ruleta-disparador' : '');
+            nodo.textContent = e.num;
+            if (e.disponible) {
+                nodo.type = 'button';
+                nodo.setAttribute('aria-haspopup', 'dialog');
+                nodo.setAttribute('aria-expanded', 'false');
+                nodo.setAttribute('aria-label', 'Abrir secciones de ' + e.titulo);
+            } else {
                 nodo.setAttribute('aria-disabled', 'true');
-                nodo.style.opacity = '.35';
-                nodo.style.cursor = 'default';
             }
-            if (nodo.tagName === 'A' && item.href) nodo.href = item.href;
-            nodo.type = nodo.tagName === 'BUTTON' ? 'button' : undefined;
-            nodo.innerHTML = '<span class="ruleta-num">' + item.num + '</span>';
-            nodo.setAttribute('aria-label', item.titulo);
+
+            const nombre = document.createElement('span');
+            nombre.className = 'etapas-rail-nombre';
+            nombre.innerHTML = e.titulo + (e.disponible ? '' : '<span class="etapas-rail-tag">proximamente</span>');
+
+            li.appendChild(nodo);
+            li.appendChild(nombre);
+            lista.appendChild(li);
+        });
+        cont.appendChild(lista);
+    }
+
+    // ------------------------------------------------------------------
+    // 2) Rueda circular (donut) de SECCIONES
+    // ------------------------------------------------------------------
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const CX = 120, CY = 120, R_OUT = 100, R_IN = 52, GAP_DEG = 2.2;
+
+    function puntoEnCirculo(r, anguloDeg) {
+        const rad = (anguloDeg - 90) * Math.PI / 180;
+        return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
+    }
+
+    function pathGajo(anguloIni, anguloFin) {
+        const p1 = puntoEnCirculo(R_OUT, anguloIni);
+        const p2 = puntoEnCirculo(R_OUT, anguloFin);
+        const p3 = puntoEnCirculo(R_IN, anguloFin);
+        const p4 = puntoEnCirculo(R_IN, anguloIni);
+        const largeArc = (anguloFin - anguloIni) > 180 ? 1 : 0;
+        return [
+            'M', p1.x, p1.y,
+            'A', R_OUT, R_OUT, 0, largeArc, 1, p2.x, p2.y,
+            'L', p3.x, p3.y,
+            'A', R_IN, R_IN, 0, largeArc, 0, p4.x, p4.y,
+            'Z',
+        ].join(' ');
+    }
+
+    function construirRuedaSecciones(svgEl, centroNumEl, centroTituloEl, secciones) {
+        svgEl.innerHTML = '';
+        const n = secciones.length;
+        const paso = 360 / n;
+        const tituloDefecto = centroTituloEl.textContent;
+        const numDefecto = centroNumEl.textContent;
+
+        secciones.forEach((s, i) => {
+            const ini = i * paso + GAP_DEG / 2;
+            const fin = (i + 1) * paso - GAP_DEG / 2;
+            const medio = (ini + fin) / 2;
+
+            const gajo = document.createElementNS(SVG_NS, 'path');
+            gajo.setAttribute('d', pathGajo(ini, fin));
+            gajo.setAttribute('class', 'gajo' + (s.activo ? ' es-actual' : ''));
+            gajo.setAttribute('tabindex', '0');
+            gajo.setAttribute('role', 'link');
+            gajo.setAttribute('aria-label', s.num + '. ' + s.titulo);
+
+            // Direccion radial para el pequeno "pop" al pasar el mouse
+            const dir = puntoEnCirculo(1, medio);
+            gajo.style.setProperty('--gdx', ((dir.x - CX) * 4) + 'px');
+            gajo.style.setProperty('--gdy', ((dir.y - CY) * 4) + 'px');
 
             const mostrar = () => {
-                if (item.disponible === false) {
-                    flot.textContent = item.titulo + ' (proximamente)';
-                } else {
-                    flot.textContent = item.titulo;
-                }
-                posicionarFlotante(flot, nodo, flot.parentElement);
-                flot.classList.add('visible');
+                centroNumEl.textContent = String(s.num).padStart(2, '0') + ' / ' + String(n).padStart(2, '0');
+                centroTituloEl.textContent = s.titulo;
             };
-            const ocultar = () => flot.classList.remove('visible');
+            const ocultar = () => {
+                centroNumEl.textContent = numDefecto;
+                centroTituloEl.textContent = tituloDefecto;
+            };
+            const ir = () => { window.location.href = s.href; };
 
-            nodo.addEventListener('mouseenter', mostrar);
-            nodo.addEventListener('focus', mostrar);
-            nodo.addEventListener('mouseleave', ocultar);
-            nodo.addEventListener('blur', ocultar);
+            gajo.addEventListener('mouseenter', mostrar);
+            gajo.addEventListener('focus', mostrar);
+            gajo.addEventListener('mouseleave', ocultar);
+            gajo.addEventListener('blur', ocultar);
+            gajo.addEventListener('click', ir);
+            gajo.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ir(); }
+            });
 
-            if (item.disponible === false) {
-                nodo.addEventListener('click', (e) => e.preventDefault());
-            } else if (item.onClick) {
-                nodo.addEventListener('click', (e) => { e.preventDefault(); item.onClick(); });
-            }
-            rueda.appendChild(nodo);
+            const numTxt = puntoEnCirculo((R_OUT + R_IN) / 2, medio);
+            const texto = document.createElementNS(SVG_NS, 'text');
+            texto.setAttribute('x', numTxt.x);
+            texto.setAttribute('y', numTxt.y);
+            texto.setAttribute('class', 'gajo-num');
+            texto.textContent = s.num;
+
+            svgEl.appendChild(gajo);
+            svgEl.appendChild(texto);
         });
     }
 
-    // ---------------------------------------------------------------
-    // 1) Rueda de Inicio: dimensiones -> secciones
-    // ---------------------------------------------------------------
-    function iniciarRuletaInicio() {
-        const caja = document.querySelector('.ruleta--inicio');
-        if (!caja) return;
-        const rueda = caja.querySelector('.ruleta-rueda');
-        const subtitulo = caja.querySelector('.ruleta-subtitulo');
-        const volverBtn = caja.querySelector('.ruleta-volver');
-        const flot = crearFlotante(caja);
-
-        const dimensiones = leerJSON('ruleta-dimensiones-data') || [];
-        const secciones = leerJSON('ruleta-secciones-data') || [];
-
-        function pintarDimensiones() {
-            caja.dataset.nivel = 'dimensiones';
-            if (subtitulo) subtitulo.textContent = 'Elige una etapa';
-            pintarRueda(rueda, flot, dimensiones.map((d) => ({
-                num: d.num, titulo: d.titulo, disponible: d.disponible,
-                onClick: d.disponible === false ? null : pintarSecciones,
-            })));
-        }
-        function pintarSecciones() {
-            caja.dataset.nivel = 'secciones';
-            if (subtitulo) subtitulo.textContent = 'Etapa 1 · elige una seccion';
-            pintarRueda(rueda, flot, secciones.map((s) => ({
-                num: s.num, titulo: s.titulo, href: s.href, activo: s.activo,
-            })));
-        }
-        if (volverBtn) volverBtn.addEventListener('click', pintarDimensiones);
-
-        pintarDimensiones();
-
-        // Se oculta despues de hacer scroll (igual que en el pantallazo de
-        // referencia: la rueda solo aparece al principio, para elegir).
-        let oculto = false;
-        const onScroll = () => {
-            const debeOcultarse = window.scrollY > 90;
-            if (debeOcultarse !== oculto) {
-                oculto = debeOcultarse;
-                caja.classList.toggle('ruleta--oculta', oculto);
-                if (oculto) flot.classList.remove('visible');
-            }
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        onScroll();
-    }
-
-    // ---------------------------------------------------------------
-    // 2) Rueda en overlay (disponible en cualquier pagina de Etapa 1)
-    // ---------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // 3) Overlay que aloja la rueda (topbar, menu movil, o riel de Inicio)
+    // ------------------------------------------------------------------
     function iniciarRuletaOverlay() {
-        const disparadores = document.querySelectorAll('.ruleta-disparador');
         const overlayFondo = document.querySelector('.ruleta-overlay-fondo');
-        if (!disparadores.length || !overlayFondo) return;
+        if (!overlayFondo) return;
 
         const panel = overlayFondo.querySelector('.ruleta-overlay-panel');
-        const rueda = panel.querySelector('.ruleta-rueda');
-        const subtitulo = panel.querySelector('.ruleta-subtitulo');
+        const svgEl = panel.querySelector('.rueda-secciones');
+        const centroNumEl = panel.querySelector('.rueda-secciones-num');
+        const centroTituloEl = panel.querySelector('.rueda-secciones-titulo');
         const cerrarBtn = panel.querySelector('.ruleta-overlay-cerrar');
-        const flot = crearFlotante(panel);
         const secciones = leerJSON('ruleta-secciones-data') || [];
 
         function abrir() {
-            if (subtitulo) subtitulo.textContent = 'Etapa 1 · elige una seccion';
-            pintarRueda(rueda, flot, secciones.map((s) => ({
-                num: s.num, titulo: s.titulo, href: s.href, activo: s.activo,
-            })));
+            construirRuedaSecciones(svgEl, centroNumEl, centroTituloEl, secciones);
             overlayFondo.classList.add('abierto');
-            disparadores.forEach((b) => b.setAttribute('aria-expanded', 'true'));
+            document.querySelectorAll('.ruleta-disparador').forEach((b) => b.setAttribute('aria-expanded', 'true'));
             document.body.style.overflow = 'hidden';
         }
         function cerrar() {
             overlayFondo.classList.remove('abierto');
-            disparadores.forEach((b) => b.setAttribute('aria-expanded', 'false'));
+            document.querySelectorAll('.ruleta-disparador').forEach((b) => b.setAttribute('aria-expanded', 'false'));
             document.body.style.overflow = '';
         }
-        disparadores.forEach((b) => b.addEventListener('click', abrir));
+        // Delegado: cualquier .ruleta-disparador presente HOY o agregado
+        // dinamicamente (el nodo activo del riel de Inicio se crea en JS)
+        // abre el overlay.
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.ruleta-disparador')) abrir();
+        });
         if (cerrarBtn) cerrarBtn.addEventListener('click', cerrar);
         overlayFondo.addEventListener('click', (e) => { if (e.target === overlayFondo) cerrar(); });
         document.addEventListener('keydown', (e) => {
@@ -170,7 +176,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        iniciarRuletaInicio();
+        construirEtapasRail();
         iniciarRuletaOverlay();
     });
 })();

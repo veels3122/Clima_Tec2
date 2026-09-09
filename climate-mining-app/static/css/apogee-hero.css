@@ -218,6 +218,13 @@
     .hero-fila { flex-direction: row; align-items: center; justify-content: space-between; gap: 48px; }
 }
 
+/* Columna derecha del hero: tarjeta de CO2 + riel de Etapas, apilados */
+.hero-panel-derecho {
+    display: flex; flex-direction: column; gap: 18px;
+    width: 100%;
+}
+@media (min-width: 1024px) { .hero-panel-derecho { width: auto; } }
+
 .hero-copy { max-width: 593px; }
 .hero-copy h1 {
     font-size: 36px; line-height: .95; margin: 0 0 20px; font-weight: 400;

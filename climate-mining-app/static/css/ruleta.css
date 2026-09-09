@@ -1,157 +1,145 @@
 /* ==========================================================================
-   ClimaTec — "Ruleta" de navegacion.
-   Reemplaza el menu desplegable clasico (lista vertical tipo <ul>) por una
-   rueda de nodos numerados: en reposo solo se ven los numeros conectados
-   por una linea; al pasar el mouse (o el foco, para teclado/accesibilidad)
-   sobre un nodo aparece su titulo a un lado, y el clic navega.
+   ClimaTec — navegacion por "etapas" y "secciones".
+   Dos componentes distintos, cada uno con su propia forma (a proposito, no
+   son lo mismo):
 
-   Dos usos del mismo componente (misma marca HTML/CSS, distinto contexto):
-     1) .ruleta--inicio   -> selector de "dimensiones" (Etapa 1, futura
-        Etapa 2...) fijado en la parte superior de Inicio; se oculta al
-        hacer scroll. Al hacer clic en una dimension, la MISMA rueda pasa
-        a mostrar las secciones de esa etapa (nivel 2).
-     2) .ruleta--overlay  -> accesible desde el boton "Etapa 1 ⌄" de la
-        topbar en cualquier pagina interior; abre un panel flotante con
-        la rueda ya en nivel de "secciones" para saltar entre las 8
-        paginas de la Etapa 1 sin usar un <ul> desplegable.
+   1) .etapas-rail  — RIEL VERTICAL con los nombres siempre visibles
+      (Definicion, Recoleccion de Datos, Analisis, Verificacion,
+      Publicacion), tal como la referencia entregada. Vive en Inicio, junto
+      a la tarjeta de CO2. Solo "Definicion" esta activa hoy; el resto se
+      ve apagada ("proximamente"). Al hacer clic en la etapa activa se abre
+      la rueda circular de secciones (punto 2).
+
+   2) .rueda-secciones — RUEDA CIRCULAR (donut de 8 gajos), uno por cada
+      seccion de la etapa Definicion. Al pasar el mouse por un gajo se
+      resalta y su nombre aparece en el centro; el clic navega. Se abre
+      en un overlay flotante, disparado desde el boton "Definicion" de la
+      topbar (cualquier pagina) o desde el riel de Inicio.
    ========================================================================== */
 
-.ruleta-caja {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: .6rem;
+/* --------------------------------------------------------------------
+   1) Riel vertical de ETAPAS
+   -------------------------------------------------------------------- */
+.etapas-rail {
+    width: 100%;
+    max-width: 300px;
+    background: rgba(13, 18, 36, .55);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.3rem 1.5rem 1.4rem;
+    backdrop-filter: blur(var(--blur-card));
+    -webkit-backdrop-filter: blur(var(--blur-card));
     font-family: "IBM Plex Mono", monospace;
 }
-.ruleta-titulo {
-    font-size: .68rem;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    color: var(--ink-mute);
+.etapas-rail-titulo {
+    font-size: .68rem; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--ink-mute); margin: 0 0 1.1rem;
 }
-.ruleta-subtitulo {
-    min-height: 1.4em;
-    font-family: "Spectral", serif;
-    font-size: 1.05rem;
-    color: #fff;
-    text-align: center;
-    transition: opacity .2s var(--ease-apogee);
+.etapas-rail-lista {
+    list-style: none; margin: 0; padding: 0; position: relative;
 }
-
-.ruleta-rueda {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 0;
-}
-.ruleta-rueda::before {
+.etapas-rail-lista::before {
     content: "";
-    position: absolute;
-    top: 20px; bottom: 20px; left: 50%;
-    width: 2px; transform: translateX(-50%);
-    background: linear-gradient(180deg, var(--cold), var(--warm));
-    opacity: .35;
+    position: absolute; left: 15px; top: 16px; bottom: 16px; width: 2px;
+    background: linear-gradient(180deg, var(--warm), var(--cold));
+    opacity: .3;
 }
-
-.ruleta-nodo {
-    position: relative;
-    z-index: 1;
-    width: 40px; height: 40px;
-    margin: 5px 0;
+.etapas-rail-item {
+    display: flex; align-items: center; gap: .85rem;
+    padding: .5rem 0; position: relative; z-index: 1;
+    opacity: .4;
+}
+.etapas-rail-item.es-activa { opacity: 1; }
+.etapas-rail-nodo {
+    width: 30px; height: 30px; flex: none;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    background: rgba(13, 18, 36, .8);
-    border: 1px solid var(--glass-border);
-    color: rgba(255,255,255,.75);
-    font-size: .82rem; font-weight: 600;
-    cursor: pointer;
-    transition: transform .22s var(--ease-apogee), border-color .22s ease,
-                background .22s ease, color .22s ease, box-shadow .22s ease;
+    border-radius: 50%; font-size: .78rem; font-weight: 700;
+    background: rgba(13, 18, 36, .9); border: 1px solid var(--glass-border);
+    color: var(--ink-mute); font-family: inherit; cursor: default;
+    transition: transform .2s var(--ease-apogee), box-shadow .2s ease, border-color .2s ease;
 }
-.ruleta-nodo:hover,
-.ruleta-nodo:focus-visible {
-    transform: scale(1.14);
-    border-color: var(--warm);
-    color: #fff;
-    background: rgba(255,106,77,.16);
-    box-shadow: 0 0 0 5px rgba(255,106,77,.12);
+.etapas-rail-item.es-activa .etapas-rail-nodo {
+    border-color: var(--warm); color: #fff; background: rgba(255, 106, 77, .18);
+    box-shadow: 0 0 0 4px rgba(255, 106, 77, .12);
+    cursor: pointer;
+}
+.etapas-rail-item.es-activa .etapas-rail-nodo:hover,
+.etapas-rail-item.es-activa .etapas-rail-nodo:focus-visible {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 6px rgba(255, 106, 77, .18);
     outline: none;
 }
-.ruleta-nodo.es-actual {
-    border-color: var(--cold);
-    background: rgba(73,199,224,.16);
-    color: #fff;
-    box-shadow: 0 0 0 5px rgba(73,199,224,.14);
+.etapas-rail-nombre {
+    font-family: "Spectral", serif; font-size: .92rem; line-height: 1.25;
+    color: var(--ink-soft);
 }
-.ruleta-nodo .ruleta-num { pointer-events: none; }
+.etapas-rail-item.es-activa .etapas-rail-nombre { color: #fff; }
+.etapas-rail-tag {
+    font-size: .6rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-mute); display: block; margin-top: .1rem;
+}
 
-/* Etiqueta flotante junto al nodo activo (desktop: a la derecha).
-   position:absolute anclada al contenedor de la rueda (.ruleta-caja o
-   .ruleta-overlay-panel, ambos position:relative) en vez de position:fixed:
-   asi no depende de que ningun ancestro deje de tener transform/filter. */
-.ruleta-flotante {
-    position: absolute;
-    z-index: 90;
-    pointer-events: none;
-    padding: .45rem .8rem;
-    border-radius: 10px;
-    background: rgba(13, 18, 36, .92);
-    border: 1px solid var(--glass-border);
-    color: #fff;
-    font-family: "Spectral", serif;
-    font-size: .95rem;
-    white-space: nowrap;
-    opacity: 0;
-    transform: translateY(-50%);
-    transition: opacity .18s var(--ease-apogee);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-}
-.ruleta-flotante.visible { opacity: 1; }
-
-/* ---------- Variante Inicio: fila propia arriba del hero, se oculta al
-   hacer scroll (nunca se superpone al titular ni a la tarjeta, porque
-   vive en el flujo normal, no en position:absolute). --------------------- */
-.ruleta--inicio {
-    align-self: flex-end;
-    max-height: 220px;
-    opacity: 1;
-    /* Sin "transform" aqui (ni siquiera translateY(0)): un transform,
-       aunque sea identidad, crea un containing block nuevo y desplaza
-       cualquier descendiente position:fixed (la etiqueta flotante) fuera
-       de sitio. El transform de salida solo se aplica en .ruleta--oculta,
-       que ya no es visible de todas formas. */
-    transition: opacity .4s var(--ease-apogee), transform .4s var(--ease-apogee),
-                max-height .4s var(--ease-apogee), margin .4s var(--ease-apogee), visibility .4s;
-    margin-bottom: 4px;
-}
-.ruleta--inicio.ruleta--oculta {
-    opacity: 0; transform: translateY(-14px);
-    max-height: 0; margin-bottom: 0;
-    visibility: hidden; pointer-events: none;
-}
 @media (max-width: 1023px) {
-    .ruleta--inicio { align-self: center; margin: 0 auto 1rem; }
+    .etapas-rail { max-width: 100%; margin: 0 auto; }
 }
 
-/* Boton de vuelta (nivel secciones -> nivel dimensiones), solo visible en nivel 2 */
-.ruleta-volver {
-    background: none; border: none; color: var(--ink-mute);
-    font-family: "IBM Plex Mono", monospace; font-size: .68rem;
-    letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
-    padding: .2rem .4rem; display: none;
+/* --------------------------------------------------------------------
+   2) Rueda circular de SECCIONES (donut de 8 gajos)
+   -------------------------------------------------------------------- */
+.rueda-secciones-caja {
+    position: relative;
+    width: min(320px, 78vw);
+    height: min(320px, 78vw);
+    margin: 1.2rem auto 0;
 }
-.ruleta-volver:hover { color: #fff; }
-.ruleta-caja[data-nivel="secciones"] .ruleta-volver { display: inline-flex; align-items: center; gap: .3rem; }
+.rueda-secciones { width: 100%; height: 100%; overflow: visible; }
 
-/* ---------- Variante overlay: disparada desde la topbar en paginas internas */
-.ruleta-disparador {
-    display: none;
+.gajo {
+    fill: rgba(255, 255, 255, .05);
+    stroke: rgba(8, 11, 22, .9);
+    stroke-width: 2;
+    cursor: pointer;
+    transition: fill .2s var(--ease-apogee), transform .2s var(--ease-apogee);
+    transform-box: fill-box;
+    transform-origin: center;
 }
-@media (min-width: 1024px) { .ruleta-disparador { display: inline-flex; } }
+.gajo:hover, .gajo:focus-visible, .gajo.es-actual {
+    fill: rgba(255, 106, 77, .38);
+    outline: none;
+}
+.gajo:hover, .gajo:focus-visible {
+    transform: translate(var(--gdx, 0), var(--gdy, 0)) scale(1.04);
+}
+.gajo-num {
+    fill: rgba(255, 255, 255, .8);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+}
+.gajo:hover ~ .gajo-num,
+.gajo.es-actual ~ .gajo-num { fill: #fff; }
 
+.rueda-secciones-centro {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 0 1.6rem;
+    pointer-events: none;
+}
+.rueda-secciones-num {
+    font-family: "IBM Plex Mono", monospace; font-size: .72rem;
+    letter-spacing: .12em; color: var(--ink-mute); margin: 0 0 .3rem;
+}
+.rueda-secciones-titulo {
+    font-family: "Spectral", serif; font-size: 1.05rem; color: #fff; margin: 0;
+    line-height: 1.2;
+}
+
+/* --------------------------------------------------------------------
+   Overlay que aloja la rueda circular (topbar -> boton "Definicion")
+   -------------------------------------------------------------------- */
 .ruleta-overlay-fondo {
     position: fixed; inset: 0; z-index: 80;
     background: rgba(6, 8, 18, .78);
@@ -167,7 +155,7 @@
     background: rgba(13, 18, 36, .82);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    padding: 1.8rem 2.2rem 1.4rem;
+    padding: 1.6rem 1.8rem 1.8rem;
     box-shadow: var(--shadow);
     transform: scale(.94); transition: transform .35s var(--ease-apogee);
     max-width: 420px; width: 100%;
@@ -179,13 +167,20 @@
     position: absolute; top: .8rem; right: .8rem;
     width: 32px; height: 32px; border-radius: 8px;
     background: rgba(255,255,255,.06); border: none; color: #fff;
-    cursor: pointer; font-size: 1rem; line-height: 1;
+    cursor: pointer; font-size: 1rem; line-height: 1; z-index: 2;
 }
 .ruleta-overlay-cerrar:hover { background: rgba(255,255,255,.14); }
-.ruleta-overlay-panel .ruleta-flotante { position: static; opacity: 1; transform: none; background: none; border: none; backdrop-filter: none; padding: .3rem 0 0; }
+.ruleta-titulo {
+    font-family: "IBM Plex Mono", monospace; font-size: .68rem;
+    letter-spacing: .22em; text-transform: uppercase; color: var(--ink-mute);
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------
+   Boton disparador dentro del nav pill / menu movil (icono + texto)
+   -------------------------------------------------------------------- */
+.ruleta-disparador { display: inline-flex; }
 
 @media (prefers-reduced-motion: reduce) {
-    .ruleta-nodo, .ruleta-flotante, .ruleta--inicio, .ruleta-overlay-fondo, .ruleta-overlay-panel {
-        transition: none !important;
-    }
+    .gajo, .etapas-rail-nodo, .ruleta-overlay-fondo, .ruleta-overlay-panel { transition: none !important; }
 }

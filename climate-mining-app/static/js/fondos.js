@@ -212,30 +212,33 @@
     }
 
     // ------------------------------------------------------------------
-    // 4) FUENTES DE DATOS — mapa abstracto con nodos de las instituciones
-    // fuente, enviando particulas de datos hacia el punto de consolidacion.
+    // 4) FUENTES DE DATOS — mapa REAL (fuentes.jpg, ideal: NASA Black Marble
+    // equirectangular, ver LISTA-DE-IMAGENES.md) con un pin en la posicion
+    // geografica VERDADERA de cada institucion fuente, emitiendo un pulso
+    // periodico ("notificacion" de dato entrante) hacia un punto de
+    // consolidacion. Ya no se dibujan continentes esquematicos: la foto de
+    // fondo (fondo-foto-fuentes, ver fondos.css) ya muestra el mundo real,
+    // asi que este canvas solo pinta los pines/pulsos por ENCIMA de ella.
+    //
+    // Posiciones calculadas con proyeccion equirectangular a partir de
+    // lat/lon reales (formula: x = (lon+180)/360, y = (90-lat)/180):
+    //   OWID   -> Oxford, Reino Unido     (51.75 N, -1.25)
+    //   IDEAM  -> Bogota, Colombia        (4.71 N, -74.07)
+    //   NOAA   -> Silver Spring, EE.UU.   (38.99 N, -76.94)
+    //   UNGRD  -> Bogota, Colombia        (3.50 N, -72.50 — desplazado un
+    //             poco de IDEAM para que los dos pines no se encimen)
+    //   UNFCCC -> Bonn, Alemania          (50.73 N, 7.10)
     // ------------------------------------------------------------------
     function fondoFuentes(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        // Continentes esquematicos (manchas suaves, no cartografia literal)
-        const manchas = [
-            [0.18, 0.30, 0.16], [0.30, 0.55, 0.12], [0.50, 0.28, 0.13],
-            [0.55, 0.60, 0.10], [0.72, 0.24, 0.15], [0.80, 0.68, 0.11],
-        ];
-        manchas.forEach(([mx, my, mr]) => {
-            ctx.beginPath();
-            ctx.ellipse(mx * w, my * h, mr * w, mr * h * 0.6, 0, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255,255,255,.035)';
-            ctx.fill();
-        });
 
         const centro = { x: w * 0.5, y: h * 0.85 };
         const fuentes = [
-            { x: 0.15, y: 0.25, nombre: 'OWID' },
-            { x: 0.42, y: 0.18, nombre: 'NOAA' },
-            { x: 0.66, y: 0.30, nombre: 'UNFCCC' },
-            { x: 0.30, y: 0.55, nombre: 'IDEAM' },
-            { x: 0.58, y: 0.55, nombre: 'UNGRD' },
+            { x: 0.4965, y: 0.2125, nombre: 'OWID' },
+            { x: 0.2863, y: 0.2834, nombre: 'NOAA' },
+            { x: 0.5197, y: 0.2182, nombre: 'UNFCCC' },
+            { x: 0.2942, y: 0.4738, nombre: 'IDEAM' },
+            { x: 0.2986, y: 0.4806, nombre: 'UNGRD' },
         ];
         fuentes.forEach((f, i) => {
             const x = f.x * w, y = f.y * h;
@@ -402,6 +405,22 @@
             const clave = hero.dataset.fondo;
 
             if (clave === 'preguntas') {
+                // Cruce (crossfade) entre las dos fotos reales -- La Nina
+                // (fondo-foto-preguntas-base) y El Nino (...-cruce) -- segun
+                // el progreso de scroll de toda la pagina. Es un listener
+                // aparte del motor de canvas para que la opacidad se
+                // actualice de inmediato al hacer scroll, incluso si el
+                // usuario tiene "reduced motion" activado (ahi el canvas de
+                // particulas no anima, pero el cruce de fotos si sigue
+                // funcionando porque es solo una transicion de opacidad).
+                const cruce = hero.querySelector('.fondo-foto-preguntas-cruce');
+                const actualizarCruce = () => {
+                    if (cruce) cruce.style.opacity = String(calcularProgresoScroll());
+                };
+                actualizarCruce();
+                window.addEventListener('scroll', actualizarCruce, { passive: true });
+                window.addEventListener('resize', actualizarCruce);
+
                 const canvas = hero.querySelector('.fondo-preguntas-fijo');
                 if (!canvas) return;
                 motor(canvas, (ctx, w, h, t) => fondoPreguntas(ctx, w, h, t, calcularProgresoScroll()), { fija: true });

@@ -47,7 +47,7 @@
             <nav class="nav-pill" aria-label="Navegacion principal">
                 <a href="{{ url_for('index') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'index' }}">Inicio</a>
                 <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa1 }}" aria-haspopup="dialog" aria-expanded="false">
-                    Etapa 1 <span class="caret">&#9662;</span>
+                    Definicion <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'dataset_etapa1' }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'fuentes_datos' }}">Fuentes</a>
@@ -75,7 +75,7 @@
             <div class="menu-overlay-links">
                 <a href="{{ url_for('index') }}">Inicio</a>
                 <button type="button" class="ruleta-disparador" aria-haspopup="dialog" aria-expanded="false">
-                    Etapa 1 <span class="caret">&#9662;</span>
+                    Definicion <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}">Fuentes</a>
@@ -88,13 +88,18 @@
         </div>
     </div>
 
-    <!-- Overlay de la "ruleta" de secciones (Etapa 1), disponible en cualquier pagina -->
+    <!-- Overlay de la ruleta circular de secciones (etapa "Definicion"), disponible en cualquier pagina -->
     <div class="ruleta-overlay-fondo">
-        <div class="ruleta-overlay-panel" role="dialog" aria-label="Secciones de la Etapa 1">
+        <div class="ruleta-overlay-panel" role="dialog" aria-label="Secciones de la etapa Definicion">
             <button type="button" class="ruleta-overlay-cerrar" aria-label="Cerrar">&times;</button>
-            <p class="ruleta-titulo">Etapa 1</p>
-            <p class="ruleta-subtitulo">Elige una seccion</p>
-            <div class="ruleta-rueda"></div>
+            <p class="ruleta-titulo">Definicion</p>
+            <div class="rueda-secciones-caja">
+                <svg class="rueda-secciones" viewBox="0 0 240 240" role="img" aria-label="Rueda de secciones"></svg>
+                <div class="rueda-secciones-centro">
+                    <p class="rueda-secciones-num">01–08</p>
+                    <p class="rueda-secciones-titulo">Pasa el mouse por un gajo</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -102,9 +107,12 @@
         {% for s in secciones_etapa1 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
         {% endfor %}
     ]</script>
-    <script type="application/json" id="ruleta-dimensiones-data">[
-        {"num": 1, "titulo": "Contexto y datos", "disponible": true},
-        {"num": 2, "titulo": "Proxima etapa", "disponible": false}
+    <script type="application/json" id="ruleta-etapas-data">[
+        {"num": 1, "titulo": "Definicion", "disponible": true, "endpoint_ref": true},
+        {"num": 2, "titulo": "Recoleccion de Datos", "disponible": false},
+        {"num": 3, "titulo": "Analisis", "disponible": false},
+        {"num": 4, "titulo": "Verificacion", "disponible": false},
+        {"num": 5, "titulo": "Publicacion", "disponible": false}
     ]</script>
 
     <main class="contenedor contenido">
