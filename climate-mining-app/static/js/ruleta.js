@@ -3,12 +3,19 @@
 // (asi los nombres y las URLs siempre vienen de url_for(), nunca se
 // hardcodean aqui):
 //
-//   #ruleta-etapas-data      -> [{num, titulo, disponible}]      (5 etapas)
-//   #ruleta-secciones-data   -> [{num, titulo, href, activo}]    (8 secciones de "Definicion")
+//   #ruleta-etapas-data                -> [{num, titulo, disponible, clave}] (5 etapas)
+//   #ruleta-secciones-<clave>-data     -> {titulo, secciones: [{num, titulo, href, activo}]}
+//                                          una por cada etapa disponible (hoy:
+//                                          "definicion" con 8 secciones y
+//                                          "recoleccion" con 7)
 //
 // Dos piezas de UI, cada una con su propia forma:
 //   1) .etapas-rail   (riel vertical, en Inicio) — construirEtapasRail()
-//   2) .rueda-secciones (donut SVG de 8 gajos, en el overlay) — construirRuedaSecciones()
+//   2) .rueda-secciones (donut SVG, en el overlay) — construirRuedaSecciones()
+//
+// El overlay de la rueda es UN solo componente compartido por todas las
+// etapas disponibles: cada .ruleta-disparador trae data-etapa="<clave>" y,
+// al abrirse, iniciarRuletaOverlay() carga el bloque JSON de esa clave.
 
 (function () {
     'use strict';
@@ -38,6 +45,7 @@
             nodo.textContent = e.num;
             if (e.disponible) {
                 nodo.type = 'button';
+                if (e.clave) nodo.dataset.etapa = e.clave;
                 nodo.setAttribute('aria-haspopup', 'dialog');
                 nodo.setAttribute('aria-expanded', 'false');
                 nodo.setAttribute('aria-label', 'Abrir secciones de ' + e.titulo);
@@ -148,11 +156,25 @@
         const svgEl = panel.querySelector('.rueda-secciones');
         const centroNumEl = panel.querySelector('.rueda-secciones-num');
         const centroTituloEl = panel.querySelector('.rueda-secciones-titulo');
+        const tituloEl = panel.querySelector('.ruleta-titulo');
+        const placeholderCentro = centroTituloEl.textContent;
         const cerrarBtn = panel.querySelector('.ruleta-overlay-cerrar');
-        const secciones = leerJSON('ruleta-secciones-data') || [];
 
-        function abrir() {
-            construirRuedaSecciones(svgEl, centroNumEl, centroTituloEl, secciones);
+        // El overlay es un solo componente reutilizado por cada etapa
+        // disponible: abrir(clave) busca el bloque JSON
+        // #ruleta-secciones-<clave>-data (impreso por base.html) y arma la
+        // rueda con esas secciones. Si la clave no trae datos, no hace nada
+        // (evita un overlay vacio).
+        function abrir(clave) {
+            const datos = leerJSON('ruleta-secciones-' + clave + '-data');
+            if (!datos || !datos.secciones || !datos.secciones.length) return;
+
+            tituloEl.textContent = datos.titulo;
+            panel.setAttribute('aria-label', 'Secciones de la etapa ' + datos.titulo);
+            centroNumEl.textContent = '01–' + String(datos.secciones.length).padStart(2, '0');
+            centroTituloEl.textContent = placeholderCentro;
+
+            construirRuedaSecciones(svgEl, centroNumEl, centroTituloEl, datos.secciones);
             overlayFondo.classList.add('abierto');
             document.querySelectorAll('.ruleta-disparador').forEach((b) => b.setAttribute('aria-expanded', 'true'));
             document.body.style.overflow = 'hidden';
@@ -164,9 +186,10 @@
         }
         // Delegado: cualquier .ruleta-disparador presente HOY o agregado
         // dinamicamente (el nodo activo del riel de Inicio se crea en JS)
-        // abre el overlay.
+        // abre el overlay con la etapa que traiga en data-etapa.
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.ruleta-disparador')) abrir();
+            const disparador = e.target.closest('.ruleta-disparador');
+            if (disparador) abrir(disparador.dataset.etapa || 'definicion');
         });
         if (cerrarBtn) cerrarBtn.addEventListener('click', cerrar);
         overlayFondo.addEventListener('click', (e) => { if (e.target === overlayFondo) cerrar(); });

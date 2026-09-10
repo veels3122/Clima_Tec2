@@ -1,7 +1,9 @@
-// ClimaTec — fondos animados por seccion (Etapa 1).
+// ClimaTec — fondos animados por seccion (Definicion y Recoleccion de Datos).
 // Un pequeno "motor" comun (resize con devicePixelRatio + requestAnimationFrame,
-// apagado si el usuario pide "reduced motion") y ocho funciones de dibujo,
-// una por seccion, elegidas segun el atributo data-fondo del .page-hero.
+// apagado si el usuario pide "reduced motion") y una funcion de dibujo por
+// seccion, elegida segun el atributo data-fondo del .page-hero. Cada seccion
+// nueva que se integre repite el mismo patron: una metafora visual propia,
+// ligada a su contenido real (nunca un fondo generico repetido).
 // Todo en Canvas 2D puro: sin librerias, sin video, sin imagenes externas.
 
 (function () {
@@ -390,6 +392,257 @@
         ctx.fillRect(0, 0, w, h);
     }
 
+    // ------------------------------------------------------------------
+    // 9) RECOLECCION DE DATOS · Descripcion del conjunto — tres anillos
+    // concentricos (Global / Regional / Nacional, los tres niveles reales
+    // del dataset) donde van cayendo particulas que se asientan en el
+    // anillo que les corresponde: la consolidacion multinivel que describe
+    // esta pagina.
+    // ------------------------------------------------------------------
+    function fondoE2Descripcion(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const cx = w * 0.78, cy = h * 0.55;
+        const radios = [0.44, 0.29, 0.15].map((f) => Math.min(w, h) * f);
+        const colores = [PALETA.frio, PALETA.ambar, PALETA.calido];
+        radios.forEach((r, i) => {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.strokeStyle = colores[i];
+            ctx.globalAlpha = 0.22;
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+        const n = 30;
+        for (let i = 0; i < n; i++) {
+            const anillo = i % 3;
+            const semilla = i * 17.3;
+            const ang = semilla + t * (0.15 + anillo * 0.05);
+            const r = radios[anillo] * (0.94 + 0.05 * Math.sin(t * 0.7 + i));
+            const x = cx + Math.cos(ang) * r;
+            const y = cy + Math.sin(ang) * r * 0.9;
+            ctx.beginPath();
+            ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+            ctx.fillStyle = colores[anillo];
+            ctx.globalAlpha = 0.55;
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,.85)';
+        ctx.fill();
+    }
+
+    // ------------------------------------------------------------------
+    // 10) RECOLECCION DE DATOS · Perfilamiento — columnas verticales (una
+    // por columna del dataset) con un barrido horizontal tipo "microscopio"
+    // que revela la altura (cardinalidad/nulos) de cada una al pasar.
+    // ------------------------------------------------------------------
+    function fondoE2Perfilamiento(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const cols = 12;
+        const cw = w / (cols + 2);
+        const barridoX = ((t * 0.16) % 1.3 - 0.15) * w;
+        for (let i = 0; i < cols; i++) {
+            const x = (i + 1) * cw;
+            const alturaBase = 0.2 + ((i * 53) % 100) / 130;
+            const dist = Math.abs(x - barridoX);
+            const cerca = clamp01(1 - dist / (w * 0.12));
+            const altura = h * alturaBase * (0.85 + 0.15 * cerca);
+            ctx.globalAlpha = 0.14 + cerca * 0.3;
+            ctx.fillStyle = i % 3 === 0 ? PALETA.frio : (i % 3 === 1 ? PALETA.ambar : PALETA.morado);
+            ctx.fillRect(x - cw * 0.28, h - altura, cw * 0.56, altura);
+        }
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = 'rgba(255,255,255,.85)';
+        ctx.fillRect(barridoX - 1, 0, 2, h);
+        ctx.globalAlpha = 1;
+    }
+
+    // ------------------------------------------------------------------
+    // 11) RECOLECCION DE DATOS · Dimensiones y metricas — radar hexagonal
+    // (las 6 dimensiones de calidad evaluadas) con el poligono de resultados
+    // "respirando" cerca del borde, como el conjunto llega con alta calidad.
+    // ------------------------------------------------------------------
+    function fondoE2Dimensiones(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const cx = w * 0.8, cy = h * 0.52, r = Math.min(w, h) * 0.32;
+        const ejes = 6;
+        for (let anillo = 1; anillo <= 3; anillo++) {
+            ctx.beginPath();
+            for (let i = 0; i <= ejes; i++) {
+                const ang = (i / ejes) * Math.PI * 2 - Math.PI / 2;
+                const rr = r * (anillo / 3);
+                const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr * 0.92;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = 'rgba(255,255,255,.1)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+        ctx.beginPath();
+        for (let i = 0; i <= ejes; i++) {
+            const ang = (i / ejes) * Math.PI * 2 - Math.PI / 2;
+            const rr = r * (0.86 + 0.08 * Math.sin(t * 1.1 + i));
+            const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr * 0.92;
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            ctx.fillStyle = PALETA.ok;
+            ctx.globalAlpha = 1;
+            ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath();
+            const ang2 = (i / ejes) * Math.PI * 2 - Math.PI / 2;
+            const rr2 = r * (0.86 + 0.08 * Math.sin(t * 1.1 + i));
+            ctx.moveTo(cx + Math.cos(ang2) * rr2, cy + Math.sin(ang2) * rr2 * 0.92);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(61,220,151,.14)';
+        ctx.fill();
+        ctx.strokeStyle = PALETA.ok;
+        ctx.globalAlpha = 0.7;
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+
+    // ------------------------------------------------------------------
+    // 12) RECOLECCION DE DATOS · Problemas identificados — barrido tipo
+    // radar/sonar que hace "sonar" los hallazgos del perfilamiento; el
+    // tamano/brillo de cada blip sigue su severidad (alta = mas cerca).
+    // ------------------------------------------------------------------
+    function fondoE2Problemas(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const cx = w * 0.8, cy = h * 0.55, rMax = Math.min(w, h) * 0.46;
+        for (let a = 1; a <= 3; a++) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, rMax * a / 3, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255,180,84,.14)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+        const blips = [
+            { ang: 0.4, rf: 0.35, sev: 1 }, { ang: 1.6, rf: 0.55, sev: 0.4 },
+            { ang: 2.6, rf: 0.85, sev: 0.6 }, { ang: 3.5, rf: 0.62, sev: 0.6 },
+            { ang: 4.4, rf: 0.9, sev: 0.3 }, { ang: 5.4, rf: 0.42, sev: 0.6 },
+        ];
+        const anguloBarrido = (t * 0.6) % (Math.PI * 2);
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, rMax, anguloBarrido - 0.5, anguloBarrido);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255,180,84,.08)';
+        ctx.fill();
+        ctx.restore();
+        blips.forEach((b) => {
+            const x = cx + Math.cos(b.ang) * rMax * b.rf;
+            const y = cy + Math.sin(b.ang) * rMax * b.rf * 0.9;
+            let diff = Math.abs(((anguloBarrido - b.ang) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+            const recienTocado = clamp01(1 - diff / 0.5);
+            const radio = 2.5 + b.sev * 3 + recienTocado * 4;
+            ctx.beginPath();
+            ctx.arc(x, y, radio, 0, Math.PI * 2);
+            ctx.fillStyle = PALETA.calido;
+            ctx.globalAlpha = 0.35 + b.sev * 0.3 + recienTocado * 0.35;
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+    }
+
+    // ------------------------------------------------------------------
+    // 13) RECOLECCION DE DATOS · Tratamiento — linea de ensamblaje: los
+    // puntos entran dispersos por la izquierda y salen alineados en una
+    // grilla ordenada por la derecha, pasando por "estaciones" de limpieza.
+    // ------------------------------------------------------------------
+    function fondoE2Tratamiento(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const estaciones = 4;
+        for (let i = 1; i <= estaciones; i++) {
+            const x = (w * i) / (estaciones + 1);
+            ctx.strokeStyle = 'rgba(73,199,224,.14)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x, h * 0.1); ctx.lineTo(x, h * 0.9); ctx.stroke();
+        }
+        const n = 24;
+        for (let i = 0; i < n; i++) {
+            const fase = ((t * 0.09) + i / n) % 1;
+            const x = fase * w;
+            const filaObjetivo = i % 6;
+            const yObjetivo = h * (0.2 + filaObjetivo * 0.11);
+            const yCaotico = h * (0.15 + ((i * 37) % 100) / 130);
+            const orden = clamp01(fase * 1.15);
+            const y = lerp(yCaotico, yObjetivo, orden);
+            ctx.beginPath();
+            ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+            ctx.fillStyle = orden > 0.7 ? PALETA.ok : PALETA.frio;
+            ctx.globalAlpha = 0.5;
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    // ------------------------------------------------------------------
+    // 14) RECOLECCION DE DATOS · Comparacion antes/despues — espejo: puntos
+    // dispersos a la izquierda (antes) y los mismos, ordenados en una
+    // grilla, a la derecha (despues), con la linea divisoria pulsando.
+    // ------------------------------------------------------------------
+    function fondoE2Comparacion(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const mid = w * 0.5;
+        const n = 30;
+        for (let i = 0; i < n; i++) {
+            const semilla = i * 29.7;
+            const xa = (Math.sin(semilla) * 0.5 + 0.5) * mid * 0.82;
+            const ya = (Math.cos(semilla * 1.7) * 0.5 + 0.5) * h;
+            const jitterA = Math.sin(t * 1.4 + i) * 4;
+            ctx.beginPath();
+            ctx.arc(xa + jitterA, ya, 2.2, 0, Math.PI * 2);
+            ctx.fillStyle = PALETA.calido;
+            ctx.globalAlpha = 0.4;
+            ctx.fill();
+
+            const cols = 6, filas = 5;
+            const c = i % cols, r = Math.floor(i / cols) % filas;
+            const xb = mid * 1.18 + (c + 0.5) * (mid * 0.7 / cols);
+            const yb = (r + 0.5) * (h / filas);
+            ctx.beginPath();
+            ctx.arc(xb, yb, 2.2, 0, Math.PI * 2);
+            ctx.fillStyle = PALETA.ok;
+            ctx.globalAlpha = 0.55;
+            ctx.fill();
+        }
+        ctx.globalAlpha = 0.15 + 0.1 * Math.sin(t * 2);
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.fillRect(mid - 1, 0, 2, h);
+        ctx.globalAlpha = 1;
+    }
+
+    // ------------------------------------------------------------------
+    // 15) RECOLECCION DE DATOS · Graficas e indicadores — tablero de barras
+    // horizontales animadas, eco directo de los graficos reales de la
+    // pagina (por fuente, por indicador atipico).
+    // ------------------------------------------------------------------
+    function fondoE2Graficas(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const filas = 6;
+        const alturaFila = h / (filas + 1);
+        for (let i = 0; i < filas; i++) {
+            const y = (i + 0.7) * alturaFila;
+            const base = 0.25 + ((i * 41) % 100) / 160;
+            const pulso = base + 0.12 * Math.sin(t * 0.8 + i * 1.3);
+            const ancho = w * 0.62 * clamp01(pulso);
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = i % 2 === 0 ? PALETA.frio : PALETA.ambar;
+            ctx.fillRect(w * 0.3, y, ancho, alturaFila * 0.4);
+            ctx.beginPath();
+            ctx.arc(w * 0.3 + ancho, y + alturaFila * 0.2, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.7;
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+
     const FONDOS = {
         problema: fondoProblema,
         necesidades: fondoNecesidades,
@@ -398,6 +651,13 @@
         diccionario: fondoDiccionario,
         calidad: fondoCalidad,
         limitaciones: fondoLimitaciones,
+        e2_descripcion: fondoE2Descripcion,
+        e2_perfilamiento: fondoE2Perfilamiento,
+        e2_dimensiones: fondoE2Dimensiones,
+        e2_problemas: fondoE2Problemas,
+        e2_tratamiento: fondoE2Tratamiento,
+        e2_comparacion: fondoE2Comparacion,
+        e2_graficas: fondoE2Graficas,
     };
 
     document.addEventListener('DOMContentLoaded', () => {

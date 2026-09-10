@@ -27,6 +27,17 @@
     ] %}
     {% set endpoints_etapa1 = secciones_etapa1 | map(attribute='endpoint') | list %}
 
+    {% set secciones_etapa2 = [
+        {'num': 1, 'titulo': 'Descripcion del conjunto de datos', 'endpoint': 'e2_descripcion'},
+        {'num': 2, 'titulo': 'Resultados del perfilamiento', 'endpoint': 'e2_perfilamiento'},
+        {'num': 3, 'titulo': 'Dimensiones y metricas evaluadas', 'endpoint': 'e2_dimensiones'},
+        {'num': 4, 'titulo': 'Problemas identificados', 'endpoint': 'e2_problemas'},
+        {'num': 5, 'titulo': 'Acciones de tratamiento aplicadas', 'endpoint': 'e2_tratamiento'},
+        {'num': 6, 'titulo': 'Comparacion antes y despues', 'endpoint': 'e2_comparacion'},
+        {'num': 7, 'titulo': 'Graficas, tablas e indicadores', 'endpoint': 'e2_graficas'},
+    ] %}
+    {% set endpoints_etapa2 = secciones_etapa2 | map(attribute='endpoint') | list %}
+
     <header class="topbar">
         <div class="contenedor topbar-inner">
             <a class="marca" href="{{ url_for('index') }}">
@@ -46,12 +57,16 @@
             <!-- Pill central (desktop >=1024px) -->
             <nav class="nav-pill" aria-label="Navegacion principal">
                 <a href="{{ url_for('index') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'index' }}">Inicio</a>
-                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa1 }}" aria-haspopup="dialog" aria-expanded="false">
+                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa1 }}" data-etapa="definicion" aria-haspopup="dialog" aria-expanded="false">
                     Definicion <span class="caret">&#9662;</span>
                 </button>
+                {% block nav_etapa2 %}
+                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa2 }}" data-etapa="recoleccion" aria-haspopup="dialog" aria-expanded="false">
+                    Recoleccion de Datos <span class="caret">&#9662;</span>
+                </button>
+                {% endblock %}
                 <a href="{{ url_for('dataset_etapa1') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'dataset_etapa1' }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'fuentes_datos' }}">Fuentes</a>
-                {% block nav_etapa2 %}{% endblock %}
             </nav>
 
             <!-- Pill derecha (desktop >=1024px) -->
@@ -74,8 +89,11 @@
         <div class="menu-overlay-panel">
             <div class="menu-overlay-links">
                 <a href="{{ url_for('index') }}">Inicio</a>
-                <button type="button" class="ruleta-disparador" aria-haspopup="dialog" aria-expanded="false">
+                <button type="button" class="ruleta-disparador" data-etapa="definicion" aria-haspopup="dialog" aria-expanded="false">
                     Definicion <span class="caret">&#9662;</span>
+                </button>
+                <button type="button" class="ruleta-disparador" data-etapa="recoleccion" aria-haspopup="dialog" aria-expanded="false">
+                    Recoleccion de Datos <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}">Fuentes</a>
@@ -88,28 +106,37 @@
         </div>
     </div>
 
-    <!-- Overlay de la ruleta circular de secciones (etapa "Definicion"), disponible en cualquier pagina -->
+    <!-- Overlay de la ruleta circular de secciones. Es UN solo componente,
+         reutilizado por cada etapa disponible (hoy: Definicion y Recoleccion
+         de Datos): el boton que lo abre (.ruleta-disparador) trae en
+         data-etapa la clave de la etapa, y ruleta.js carga con esa clave el
+         bloque #ruleta-secciones-<clave>-data correspondiente, impreso mas
+         abajo. -->
     <div class="ruleta-overlay-fondo">
-        <div class="ruleta-overlay-panel" role="dialog" aria-label="Secciones de la etapa Definicion">
+        <div class="ruleta-overlay-panel" role="dialog" aria-label="Secciones de la etapa">
             <button type="button" class="ruleta-overlay-cerrar" aria-label="Cerrar">&times;</button>
-            <p class="ruleta-titulo">Definicion</p>
+            <p class="ruleta-titulo">&nbsp;</p>
             <div class="rueda-secciones-caja">
                 <svg class="rueda-secciones" viewBox="0 0 240 240" role="img" aria-label="Rueda de secciones"></svg>
                 <div class="rueda-secciones-centro">
-                    <p class="rueda-secciones-num">01–08</p>
+                    <p class="rueda-secciones-num">&nbsp;</p>
                     <p class="rueda-secciones-titulo">Pasa el mouse por un gajo</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <script type="application/json" id="ruleta-secciones-data">[
+    <script type="application/json" id="ruleta-secciones-definicion-data">{"titulo": "Definicion", "secciones": [
         {% for s in secciones_etapa1 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
         {% endfor %}
-    ]</script>
+    ]}</script>
+    <script type="application/json" id="ruleta-secciones-recoleccion-data">{"titulo": "Recoleccion de Datos", "secciones": [
+        {% for s in secciones_etapa2 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
+        {% endfor %}
+    ]}</script>
     <script type="application/json" id="ruleta-etapas-data">[
-        {"num": 1, "titulo": "Definicion", "disponible": true, "endpoint_ref": true},
-        {"num": 2, "titulo": "Recoleccion de Datos", "disponible": false},
+        {"num": 1, "titulo": "Definicion", "disponible": true, "clave": "definicion"},
+        {"num": 2, "titulo": "Recoleccion de Datos", "disponible": true, "clave": "recoleccion"},
         {"num": 3, "titulo": "Analisis", "disponible": false},
         {"num": 4, "titulo": "Verificacion", "disponible": false},
         {"num": 5, "titulo": "Publicacion", "disponible": false}
