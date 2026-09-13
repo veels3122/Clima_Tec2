@@ -435,7 +435,7 @@
         // que no se encimen.
         const fuentesExternas = [
             { x: 0.4795, y: 0.2255, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
-            { x: 0.5158, y: 0.2222, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
+            { x: 0.5058, y: 0.2262, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
             { x: 0.19, y: 0.20, nombre: 'NOAA GML', icono: 'satelite', etiqueta: 'arriba' },   
             { x: 0.2888, y: 0.2474, nombre: 'NASA GISS', icono: 'satelite', etiqueta: 'arriba' },
             { x: 0.2608, y: 0.2734, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
