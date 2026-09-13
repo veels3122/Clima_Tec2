@@ -434,7 +434,7 @@
         // (izquierda/derecha) en vez de las tres arriba centradas, para
         // que no se encimen.
         const fuentesExternas = [
-            { x: 0.4865, y: 0.2125, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
+            { x: 0.4705, y: 0.2225, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
             { x: 0.2863, y: 0.2834, nombre: 'NOAA', icono: 'satelite', etiqueta: 'arriba' },
             { x: 0.5197, y: 0.2182, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
         ];
