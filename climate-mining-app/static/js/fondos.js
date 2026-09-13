@@ -434,9 +434,9 @@
         // (izquierda/derecha) en vez de las tres arriba centradas, para
         // que no se encimen.
         const fuentesExternas = [
-            { x: 0.4765, y: 0.2225, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
+            { x: 0.4795, y: 0.2255, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
             { x: 0.2863, y: 0.2834, nombre: 'NOAA', icono: 'satelite', etiqueta: 'arriba' },
-            { x: 0.5197, y: 0.2182, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
+            { x: 0.5107, y: 0.2242, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
         ];
         // IDEAM y UNGRD estan a solo unos km entre si (ambas en Bogota), tan
         // cerca del propio marcador de la sede que sus iconos quedarian
