@@ -368,7 +368,7 @@
     // visible). Mateo pidio "un poquito mas de zoom" porque el mapa
     // completo distorsionaba alguito el diseno y no se alcanzaban a ver
     // bien los lugares de origen de los datos -- 1.16 = 16% mas grande.
-    const ZOOM_MAPA_FUENTES = 1.60;
+    const ZOOM_MAPA_FUENTES = 1.50;
     // Punto de anclaje del zoom, en FRACCION DEL MAPA COMPLETO (0..1, las
     // mismas fracciones lat/lon que usan los pines) -- es el centro de
     // masa real de Colombia + las 5 fuentes (OWID/NOAA/UNFCCC/IDEAM/UNGRD),
