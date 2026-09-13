@@ -368,7 +368,7 @@
     // visible). Mateo pidio "un poquito mas de zoom" porque el mapa
     // completo distorsionaba alguito el diseno y no se alcanzaban a ver
     // bien los lugares de origen de los datos -- 1.16 = 16% mas grande.
-    const ZOOM_MAPA_FUENTES = 1.90;
+    const ZOOM_MAPA_FUENTES = 1.60;
     // Punto de anclaje del zoom, en FRACCION DEL MAPA COMPLETO (0..1, las
     // mismas fracciones lat/lon que usan los pines) -- es el centro de
     // masa real de Colombia + las 5 fuentes (OWID/NOAA/UNFCCC/IDEAM/UNGRD),
@@ -434,7 +434,7 @@
         // (izquierda/derecha) en vez de las tres arriba centradas, para
         // que no se encimen.
         const fuentesExternas = [
-            { x: 0.4705, y: 0.2225, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
+            { x: 0.4765, y: 0.2225, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
             { x: 0.2863, y: 0.2834, nombre: 'NOAA', icono: 'satelite', etiqueta: 'arriba' },
             { x: 0.5197, y: 0.2182, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
         ];
