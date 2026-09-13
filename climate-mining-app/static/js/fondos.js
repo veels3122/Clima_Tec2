@@ -138,9 +138,16 @@
     // calcularProgresoScroll().
     // ------------------------------------------------------------------
     function fondoPreguntas(ctx, w, h, t, progreso) {
+        // OJO: antes esta funcion pintaba aqui un rectangulo OPACO
+        // ("#05070f" a pantalla completa) antes de dibujar los blobs. Este
+        // canvas vive en z-index:-3, ARRIBA de las fotos reales de El Nino/
+        // La Nina (z-index:-4, ver fondos.css) -- un relleno opaco tapaba
+        // por completo esas fotos, que quedaban 100% invisibles detras del
+        // canvas (por eso se veia "solo negro con manchas de color", el bug
+        // que reporto Mateo). Con clearRect (transparente) el canvas deja
+        // ver la foto real de fondo y solo se dibujan encima los blobs y
+        // particulas semitransparentes, como esta pensado.
         ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = '#05070f';
-        ctx.fillRect(0, 0, w, h);
 
         // Envolvente asimetrica: sube rapido, baja gradual (nunca de golpe).
         const p = progreso == null ? 0 : progreso;
@@ -357,6 +364,20 @@
         ctx.restore();
     }
 
+    // Cuanto se acerca el mapa respecto al "contain" base (mapa completo
+    // visible). Mateo pidio "un poquito mas de zoom" porque el mapa
+    // completo distorsionaba alguito el diseno y no se alcanzaban a ver
+    // bien los lugares de origen de los datos -- 1.16 = 16% mas grande.
+    const ZOOM_MAPA_FUENTES = 1.16;
+    // Punto de anclaje del zoom, en FRACCION DEL MAPA COMPLETO (0..1, las
+    // mismas fracciones lat/lon que usan los pines) -- es el centro de
+    // masa real de Colombia + las 5 fuentes (OWID/NOAA/UNFCCC/IDEAM/UNGRD),
+    // no el centro geometrico del mapa (que caeria en el golfo de Guinea,
+    // vacio). Anclando el zoom aqui, la region que realmente importa queda
+    // fija en pantalla mientras el resto del mapa crece alrededor -- nunca
+    // se sale del encuadre ni empuja los pines fuera de la pantalla.
+    const ANCLA_ZOOM_FUENTES = { x: 0.361, y: 0.359 };
+
     function fondoFuentes(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
 
@@ -365,7 +386,24 @@
         // -- asi coinciden con su pais real sin importar la proporcion de
         // pantalla. Mientras el archivo no ha cargado, se deja el fondo
         // heredado (degradado + fondo-foto-fuentes en CSS) sin dibujar mapa.
-        const mapa = rectMapaFuentes(w, h);
+        // rectMapaFuentes() da el "contain" base (mapa COMPLETO, sin
+        // recorte); a partir de ahi se aplica un zoom leve anclado en
+        // ANCLA_ZOOM_FUENTES. Como px()/py() (mas abajo) siguen siendo
+        // "mapa.x + fraccion*mapa.w", agrandar/mover este rectangulo NO
+        // desalinea ningun pin -- la formula es la misma, solo cambia la
+        // magnitud del rectangulo sobre el que se aplica.
+        const base = rectMapaFuentes(w, h);
+        const mapa = {
+            w: base.w * ZOOM_MAPA_FUENTES,
+            h: base.h * ZOOM_MAPA_FUENTES,
+        };
+        // Ancla: el punto ANCLA_ZOOM_FUENTES debe quedar en la MISMA
+        // posicion de pantalla antes y despues del zoom.
+        const anclaPantallaX = base.x + ANCLA_ZOOM_FUENTES.x * base.w;
+        const anclaPantallaY = base.y + ANCLA_ZOOM_FUENTES.y * base.h;
+        mapa.x = anclaPantallaX - ANCLA_ZOOM_FUENTES.x * mapa.w;
+        mapa.y = anclaPantallaY - ANCLA_ZOOM_FUENTES.y * mapa.h;
+
         if (mapaFuentesListo) {
             ctx.drawImage(mapaFuentes, mapa.x, mapa.y, mapa.w, mapa.h);
             // Mismo tinte (color + opacidad + mezcla "multiply") que
