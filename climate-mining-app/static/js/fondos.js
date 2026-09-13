@@ -435,8 +435,12 @@
         // que no se encimen.
         const fuentesExternas = [
             { x: 0.4795, y: 0.2255, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
-            { x: 0.2863, y: 0.2834, nombre: 'NOAA', icono: 'satelite', etiqueta: 'arriba' },
-            { x: 0.5107, y: 0.2242, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
+            { x: 0.5198, y: 0.2182, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
+            { x: 0.19, y: 0.20, nombre: 'NOAA GML', icono: 'satelite', etiqueta: 'arriba' },   
+            { x: 0.2888, y: 0.2474, nombre: 'NASA GISS', icono: 'satelite', etiqueta: 'arriba' },
+            { x: 0.2608, y: 0.2734, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
+            { x: 0.3108, y: 0.2934, nombre: 'NASA POWER', icono: 'satelite', etiqueta: 'derecha' },
+            { x: 0.2788, y: 0.3214, nombre: 'NOAA NCEI', icono: 'db', etiqueta: 'abajo' },
         ];
         // IDEAM y UNGRD estan a solo unos km entre si (ambas en Bogota), tan
         // cerca del propio marcador de la sede que sus iconos quedarian
@@ -492,7 +496,7 @@
 
             dibujarIconoFuente(f.icono, ctx, x, y, 9, 'rgba(255,255,255,.92)');
 
-            ctx.font = '10px "IBM Plex Mono", monospace';
+                       ctx.font = '10px "IBM Plex Mono", monospace';
             ctx.fillStyle = 'rgba(255,255,255,.6)';
             if (f.etiqueta === 'izquierda') {
                 ctx.textAlign = 'right';
@@ -500,6 +504,9 @@
             } else if (f.etiqueta === 'derecha') {
                 ctx.textAlign = 'left';
                 ctx.fillText(f.nombre, x + pulsoLocal + 10, y + 3);
+            } else if (f.etiqueta === 'abajo') {
+                ctx.textAlign = 'center';
+                ctx.fillText(f.nombre, x, y + pulsoLocal + 16);
             } else {
                 ctx.textAlign = 'center';
                 ctx.fillText(f.nombre, x, y - pulsoLocal - 12);
