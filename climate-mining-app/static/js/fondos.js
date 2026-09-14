@@ -368,7 +368,7 @@
     // visible). Mateo pidio "un poquito mas de zoom" porque el mapa
     // completo distorsionaba alguito el diseno y no se alcanzaban a ver
     // bien los lugares de origen de los datos -- 1.16 = 16% mas grande.
-    const ZOOM_MAPA_FUENTES = 1.50;
+    const ZOOM_MAPA_FUENTES = 1.30;
     // Punto de anclaje del zoom, en FRACCION DEL MAPA COMPLETO (0..1, las
     // mismas fracciones lat/lon que usan los pines) -- es el centro de
     // masa real de Colombia + las 5 fuentes (OWID/NOAA/UNFCCC/IDEAM/UNGRD),
@@ -436,11 +436,11 @@
         const fuentesExternas = [
             { x: 0.4795, y: 0.2255, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
             { x: 0.5058, y: 0.2262, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
-            { x: 0.19, y: 0.20, nombre: 'NOAA GML', icono: 'satelite', etiqueta: 'arriba' },   
-            { x: 0.2888, y: 0.2474, nombre: 'NASA GISS', icono: 'satelite', etiqueta: 'arriba' },
-            { x: 0.2608, y: 0.2734, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
-            { x: 0.3108, y: 0.2934, nombre: 'NASA POWER', icono: 'satelite', etiqueta: 'derecha' },
-            { x: 0.2788, y: 0.3214, nombre: 'NOAA NCEI', icono: 'db', etiqueta: 'abajo' },
+            { x: 0.08, y: 0.39, nombre: 'NOAA GML', icono: 'satelite', etiqueta: 'arriba' },   
+            { x: 0.2988, y: 0.2874, nombre: 'NASA GISS', icono: 'satelite', etiqueta: 'arriba' },
+            { x: 0.3048, y: 0.3184, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
+            { x: 0.2908, y: 0.3210, nombre: 'NASA POWER', icono: 'satelite', etiqueta: 'derecha' },
+            { x: 0.2638, y: 0.2984, nombre: 'NOAA NCEI', icono: 'db', etiqueta: 'abajo' },
         ];
         // IDEAM y UNGRD estan a solo unos km entre si (ambas en Bogota), tan
         // cerca del propio marcador de la sede que sus iconos quedarian
