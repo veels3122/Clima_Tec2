@@ -427,7 +427,7 @@
 
         // Colombia = sede del proyecto. Todo converge aqui, no en un punto
         // generico del oceano.
-        const colombia = { x: px(0.280), y: py(0.498) };
+        const colombia = { x: px(0.287), y: py(0.498) };
 
         // OWID (Oxford) y UNFCCC (Bonn) quedan muy cerca entre si en el
         // mapa real (~700km) -- sus etiquetas se separan a los lados
