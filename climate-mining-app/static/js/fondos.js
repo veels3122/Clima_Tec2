@@ -438,7 +438,7 @@
             { x: 0.5058, y: 0.2262, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
             { x: 0.08, y: 0.39, nombre: 'NOAA GML', icono: 'satelite', etiqueta: 'arriba' },   
             { x: 0.2988, y: 0.2874, nombre: 'NASA GISS', icono: 'satelite', etiqueta: 'arriba' },
-            { x: 0.2948, y: 0.3184, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
+            { x: 0.2948, y: 0.2884, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
             { x: 0.2408, y: 0.3210, nombre: 'NASA POWER', icono: 'satelite', etiqueta: 'derecha' },
             { x: 0.2038, y: 0.2984, nombre: 'NOAA NCEI', icono: 'db', etiqueta: 'abajo' },
         ];
