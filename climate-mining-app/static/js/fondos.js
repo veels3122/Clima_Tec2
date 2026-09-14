@@ -427,7 +427,7 @@
 
         // Colombia = sede del proyecto. Todo converge aqui, no en un punto
         // generico del oceano.
-        const colombia = { x: px(0.294), y: py(0.478) };
+        const colombia = { x: px(0.280), y: py(0.498) };
 
         // OWID (Oxford) y UNFCCC (Bonn) quedan muy cerca entre si en el
         // mapa real (~700km) -- sus etiquetas se separan a los lados
@@ -438,7 +438,7 @@
             { x: 0.5058, y: 0.2262, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
             { x: 0.08, y: 0.39, nombre: 'NOAA GML', icono: 'satelite', etiqueta: 'arriba' },   
             { x: 0.2988, y: 0.2874, nombre: 'NASA GISS', icono: 'satelite', etiqueta: 'arriba' },
-            { x: 0.2348, y: 0.2384, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
+            { x: 0.2348, y: 0.2424, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
             { x: 0.2468, y: 0.3350, nombre: 'NASA POWER', icono: 'satelite', etiqueta: 'derecha' },
             { x: 0.2038, y: 0.2984, nombre: 'NOAA NCEI', icono: 'db', etiqueta: 'abajo' },
         ];
