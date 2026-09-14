@@ -722,8 +722,12 @@
     // ------------------------------------------------------------------
     function fondoE2Descripcion(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.78, cy = h * 0.55;
-        const radios = [0.44, 0.29, 0.15].map((f) => Math.min(w, h) * f);
+        // Centro y radios calibrados con la foto real (e2_descripcion.jpg,
+        // proporcion 2752x1536): centro en fraccion de imagen (0.7097,0.4993),
+        // radios en fraccion del ANCHO de imagen (0.2011/0.1308/0.0740).
+        // K = alto/ancho de la foto = 1536/2752 = 0.55814.
+        const cx = w * 0.7097, cy = h / 2 + w * 0.55814 * (0.4993 - 0.5);
+        const radios = [0.2011, 0.1308, 0.074].map((f) => w * f);
         const colores = [PALETA.frio, PALETA.ambar, PALETA.calido];
         radios.forEach((r, i) => {
             ctx.beginPath();
@@ -842,7 +846,10 @@
     // ------------------------------------------------------------------
     function fondoE2Dimensiones(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.8, cy = h * 0.52, r = Math.min(w, h) * 0.32;
+        // Centro y radio calibrados con la foto real (e2_dimensiones.jpg):
+        // centro en fraccion de imagen (0.7362,0.5003), radio exterior en
+        // fraccion del ancho de imagen = 0.2369.
+        const cx = w * 0.7362, cy = h / 2 + w * 0.55814 * (0.5003 - 0.5), r = w * 0.2369;
         const ejes = 6;
         for (let anillo = 1; anillo <= 3; anillo++) {
             ctx.beginPath();
@@ -894,7 +901,10 @@
     // ------------------------------------------------------------------
     function fondoE2Problemas(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.8, cy = h * 0.55, rMax = Math.min(w, h) * 0.46;
+        // Centro y radio calibrados con la foto real (e2_problemas.jpg):
+        // el cruce del radar esta en fraccion de imagen (0.714,0.5) y el
+        // anillo exterior visible en fraccion del ancho de imagen ~0.19.
+        const cx = w * 0.714, cy = h / 2, rMax = w * 0.19;
 
         // Nodos de fondo: dispersos, casi invisibles, solo dan textura de "constelacion".
         const nFondo = 42;
@@ -1100,20 +1110,33 @@
     // ------------------------------------------------------------------
     function fondoE2Graficas(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const filas = 6;
-        const alturaFila = h / (filas + 1);
+        // Geometria calibrada con la foto real (e2_graficas.jpg): son 10
+        // barras horizontales, no 6. Su pista va de x=0.448*ancho a
+        // x=0.961*ancho, y la primera fila esta centrada en la fraccion de
+        // ALTO de imagen 0.0768, con filas separadas cada 0.09376 (misma
+        // fraccion de alto de imagen). K = 1536/2752 = 0.55814 convierte
+        // esas fracciones de alto de imagen a coordenadas del canvas.
+        const K = 0.55814;
+        const filas = 10;
+        const y0Frac = 0.0768;
+        const spacingFrac = 0.09376;
+        const xIni = w * 0.448;
+        const xFin = w * 0.961;
+        const anchoTotal = xFin - xIni;
+        const alturaFila = w * 0.024;
         const indiceAtipico = 4; // fila que se resalta como "valor atipico"
         const puntos = [];
 
         for (let i = 0; i < filas; i++) {
-            const y = (i + 0.7) * alturaFila;
+            const filaFrac = y0Frac + i * spacingFrac;
+            const y = h / 2 + w * K * (filaFrac - 0.5);
             const base = 0.25 + ((i * 41) % 100) / 160;
             const pulso = base + 0.12 * Math.sin(t * 0.8 + i * 1.3);
-            const ancho = w * 0.62 * clamp01(pulso);
+            const ancho = anchoTotal * clamp01(pulso);
             ctx.globalAlpha = 0.5;
             ctx.fillStyle = i % 2 === 0 ? PALETA.frio : PALETA.ambar;
-            ctx.fillRect(w * 0.3, y, ancho, alturaFila * 0.4);
-            puntos.push({ x: w * 0.3 + ancho, y: y + alturaFila * 0.2 });
+            ctx.fillRect(xIni, y - alturaFila / 2, ancho, alturaFila);
+            puntos.push({ x: xIni + ancho, y });
         }
 
         // Linea de tendencia: conecta el extremo de cada barra.
@@ -1448,9 +1471,15 @@
             'Tratamiento justificado de atipicos',
         ];
         const n = items.length;
-        const cx = w * 0.7;
-        const focoY = h * 0.5;
-        const filaH = Math.min(h * 0.15, 44);
+        // Panel calibrado con la foto real (e2_plan.jpg): la tarjeta/panel
+        // difuminado esta centrado en fraccion de imagen (0.7375,0.5135)
+        // con medio-ancho 0.1825 (fraccion del ancho de imagen). El
+        // desplazamiento vertical del centro real (0.5135 vs 0.5) es minimo
+        // asi que se aproxima a h/2.
+        const cx = w * 0.7375;
+        const halfAncho = w * 0.1825;
+        const focoY = h / 2 + w * 0.0075;
+        const filaH = Math.min(h * 0.15, 40);
         const cicloTotal = filaH * n;
         const scrollY = (t * 0.5 * filaH) % cicloTotal;
 
@@ -1470,10 +1499,10 @@
             ctx.fillStyle = foco > 0.75 ? '#ffffff' : 'rgba(255,255,255,.72)';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText(items[k], cx - w * 0.14, y);
+            ctx.fillText(items[k], cx - halfAncho * 0.55, y);
             ctx.restore();
 
-            const cxCheck = cx - w * 0.22;
+            const cxCheck = cx - halfAncho * 0.85;
             ctx.beginPath();
             ctx.arc(cxCheck, y, 6, 0, Math.PI * 2);
             ctx.strokeStyle = PALETA.ok;
@@ -1495,8 +1524,8 @@
         ctx.strokeStyle = 'rgba(61,220,151,.2)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(cx - w * 0.28, focoY);
-        ctx.lineTo(cx + w * 0.02, focoY);
+        ctx.moveTo(cx - halfAncho * 0.95, focoY);
+        ctx.lineTo(cx + halfAncho * 0.85, focoY);
         ctx.stroke();
     }
 
